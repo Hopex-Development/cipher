@@ -1,53 +1,45 @@
-﻿using Hopex.Cipher.Enums;
+﻿using Hopex.Cipher.Ciphers;
+using Hopex.Cipher.Enums;
 using Hopex.Cipher.Interfaces;
-using Hopex.Cipher.Ciphers;
 
-namespace Hopex.Cipher
+namespace Hopex.Cipher;
+
+/// <summary>
+///     Provides string encryption and decryption.
+/// </summary>
+public class Cipher : ICipher
 {
+    private readonly ICipher _resolveCipher;
+
     /// <summary>
-    /// Provides string encryption and decryption.
+    ///     Provides string encryption and decryption.
     /// </summary>
-    public class Cipher : ICipher
+    /// <param name="type">Type of encryption.</param>
+    /// <param name="key">Required for DES cipher.</param>
+    public Cipher(CipherType type, string key = default)
     {
-        private readonly ICipher resolveCipher;
-
-        /// <summary>
-        /// Provides string encryption and decryption.
-        /// </summary>
-        /// <param name="type">Type of encryption.</param>
-        /// <param name="key">Required for DES cipher.</param>
-        public Cipher(CipherType type, string key = default)
+        _resolveCipher = type switch
         {
-            switch (type)
-            {
-                case CipherType.AES:
-                    resolveCipher = new AES();
-                    break;
-                case CipherType.Base16:
-                    resolveCipher = new Base16();
-                    break;
-                case CipherType.Base64:
-                    resolveCipher = new Base64();
-                    break;
-                case CipherType.DES:
-                    resolveCipher = new DES(key);
-                    break;
-                case CipherType.MD5:
-                    resolveCipher = new MD5();
-                    break;
-                case CipherType.SHA1:
-                    resolveCipher = new SHA1();
-                    break;
-                case CipherType.SHA256:
-                    resolveCipher = new SHA256();
-                    break;
-            }
-        }
+            CipherType.AES => new AES(),
+            CipherType.Base16 => new Base16(),
+            CipherType.Base64 => new Base64(),
+            CipherType.DES => new DES(key),
+            CipherType.MD5 => new MD5(),
+            CipherType.SHA1 => new SHA1(),
+            CipherType.SHA256 => new SHA256(),
+            _ => _resolveCipher
+        };
+    }
 
-        /// <inheritdoc/>
-        public string Encode(string input) => resolveCipher.Encode(input);
+    /// <inheritdoc />
+    public string Encode(string input)
+    {
+        return _resolveCipher.Encode(input);
+    }
 
-        /// <inheritdoc/>
-        public string Decode(string input) => resolveCipher.Decode(input);
+    /// <inheritdoc />
+    public string Decode(string input)
+    {
+        return _resolveCipher.Decode(input);
     }
 }
