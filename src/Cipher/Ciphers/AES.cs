@@ -6,10 +6,22 @@ namespace Hopex.Cipher.Ciphers;
 
 internal class AES : ICipher
 {
-    private readonly byte[] _key = Enumerable.Range(
-        0,
-        32
-    ).Select(x => (byte)x).ToArray();
+    private readonly byte[] _key;
+
+    public AES(string key = default)
+    {
+        if (key == default)
+        {
+            _key = Enumerable.Range(
+                0,
+                32
+            ).Select(x => (byte)x).ToArray();
+        }
+        else
+        {
+            _key = Encoding.UTF8.GetBytes(key);
+        }
+    }
 
     /// <inheritdoc />
     public string Encode(string input)

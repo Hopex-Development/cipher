@@ -9,14 +9,14 @@ internal class DES : ICipher
     private const CipherMode CipherMode = System.Security.Cryptography.CipherMode.ECB;
 
     private const PaddingMode PaddingMode = System.Security.Cryptography.PaddingMode.PKCS7;
-    private readonly string _key;
+    private readonly byte[] _key;
 
     public DES(string key)
     {
         if (string.IsNullOrEmpty(key))
             throw new Exception("The encryption key cannot be empty.");
 
-        _key = key;
+        _key = Encoding.UTF8.GetBytes(key);
     }
 
     /// <inheritdoc />
@@ -24,7 +24,7 @@ internal class DES : ICipher
     {
         var bytesOfInput = Encoding.UTF8.GetBytes(input);
         using var mD5CryptoServiceProvider = new MD5CryptoServiceProvider();
-        var bytesOfHash = mD5CryptoServiceProvider.ComputeHash(Encoding.UTF8.GetBytes(_key));
+        var bytesOfHash = mD5CryptoServiceProvider.ComputeHash(_key);
         using var tripleCryptoServiceProvider = new TripleDESCryptoServiceProvider();
         tripleCryptoServiceProvider.Key = bytesOfHash;
         tripleCryptoServiceProvider.Mode = CipherMode;
@@ -50,7 +50,7 @@ internal class DES : ICipher
     {
         var bytesOfInput = Convert.FromBase64String(input);
         using var mD5CryptoServiceProvider = new MD5CryptoServiceProvider();
-        var bytesOfHash = mD5CryptoServiceProvider.ComputeHash(Encoding.UTF8.GetBytes(_key));
+        var bytesOfHash = mD5CryptoServiceProvider.ComputeHash(_key);
         using var tripDes = new TripleDESCryptoServiceProvider();
         tripDes.Key = bytesOfHash;
         tripDes.Mode = CipherMode;

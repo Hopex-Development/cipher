@@ -20,11 +20,12 @@ public class Cipher : ICipher
     {
         _resolveCipher = type switch
         {
-            CipherType.AES => new AES(),
+            CipherType.AES => new AES(key),
             CipherType.Base16 => new Base16(),
+            CipherType.Base32 => new Base32(),
             CipherType.Base64 => new Base64(),
             CipherType.DES => new DES(key),
-            CipherType.MD5 => new MD5(),
+            CipherType.MD5 => new MD5(key),
             CipherType.SHA1 => new SHA1(),
             CipherType.SHA256 => new SHA256(),
             _ => _resolveCipher

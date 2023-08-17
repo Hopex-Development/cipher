@@ -14,15 +14,6 @@ public enum CipherType
     AES,
 
     /// <summary>
-    ///     Group of binary-to-text encoding schemes that represent binary data (more specifically, a sequence of
-    ///     8-bit bytes) in sequences of 24 bits that can be represented by four 6-bit Base64 digits.
-    /// </summary>
-    /// <remarks>
-    ///     <see href="https://en.wikipedia.org/wiki/Base64">Read more</see>
-    /// </remarks>
-    Base64,
-
-    /// <summary>
     ///     The Data Encryption Standard (DES) is a symmetric-key algorithm for the encryption of digital data.
     ///     It is used here cipher mode ECB and padding mode PKCS7.
     /// </summary>
@@ -40,6 +31,26 @@ public enum CipherType
     ///     <see href="https://en.wikipedia.org/wiki/Hexadecimal">Read more</see>
     /// </remarks>
     Base16,
+
+    /// <summary>
+    ///     Group of binary-to-text encoding schemes that represent binary data (more specifically, a sequence of
+    ///     8-bit bytes) in sequences of 24 bits that can be represented by four 6-bit Base64 digits.
+    /// </summary>
+    /// <remarks>
+    ///     <see href="https://en.wikipedia.org/wiki/Base64">Read more</see>
+    /// </remarks>
+    Base64,
+
+    /// <summary>
+    ///     Base32 is the base-32 numeral system.
+    ///     It uses a set of 32 digits, each of which can be represented by 5 bits (25).
+    ///     One way to represent Base32 numbers in a human-readable way is by using a standard 32-character set,
+    ///     such as the twenty-two upper-case letters A–V and the digits 0-9.
+    /// </summary>
+    /// <remarks>
+    ///     <see href="https://en.wikipedia.org/wiki/Base32">Read more</see>
+    /// </remarks>
+    Base32,
 
     /// <summary>
     ///     Message-digest algorithm, cannot be decoded.
