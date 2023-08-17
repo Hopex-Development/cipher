@@ -1,84 +1,77 @@
-﻿using System;
-using System.IO;
-using System.Linq;
-using System.Security.Cryptography;
+﻿using System.Security.Cryptography;
 using System.Text;
-
 using Hopex.Cipher.Interfaces;
 
-namespace Hopex.Cipher.Ciphers
+namespace Hopex.Cipher.Ciphers;
+
+internal class AES : ICipher
 {
-    internal class AES : ICipher
+    private readonly byte[] _key;
+
+    public AES(string key = default)
     {
-        private readonly byte[] key = Enumerable.Range(
-            start: 0, 
-            count: 32
-        ).Select(selector: x => (byte)x).ToArray();
-
-        /// <inheritdoc/>
-        public string Encode(string input)
+        if (key == default)
         {
-            using (MemoryStream memoryStream = new MemoryStream())
-            {
-                using (AesManaged aesManaged = new AesManaged()
-                {
-                    Key = key 
-                })
-                {
-                    memoryStream.Write(
-                        buffer: aesManaged.IV,
-                        offset: 0,
-                        count: aesManaged.IV.Length
-                    );
-                    using (CryptoStream cryptoStream = new CryptoStream(
-                        stream: memoryStream,
-                        transform: aesManaged.CreateEncryptor(),
-                        mode: CryptoStreamMode.Write,
-                        leaveOpen: true
-                    ))
-                    {
-                        byte[] bytesOfInput = Encoding.UTF8.GetBytes(s: input);
-                        cryptoStream.Write(
-                            buffer: bytesOfInput, 
-                            offset: 0,
-                            count: bytesOfInput.Length
-                        );
-                    }
-                }
+            _key = Enumerable.Range(
+                0,
+                32
+            ).Select(x => (byte)x).ToArray();
+        }
+        else
+        {
+            _key = Encoding.UTF8.GetBytes(key);
+        }
+    }
 
-                return Convert.ToBase64String(inArray: memoryStream.ToArray());
-            }
+    /// <inheritdoc />
+    public string Encode(string input)
+    {
+        using var memoryStream = new MemoryStream();
+        using (var aesManaged = new AesManaged())
+        {
+            aesManaged.Key = _key;
+            memoryStream.Write(
+                aesManaged.IV,
+                0,
+                aesManaged.IV.Length
+            );
+            using var cryptoStream = new CryptoStream(
+                memoryStream,
+                aesManaged.CreateEncryptor(),
+                CryptoStreamMode.Write
+            );
+            var bytesOfInput = Encoding.UTF8.GetBytes(input);
+            cryptoStream.Write(
+                bytesOfInput,
+                0,
+                bytesOfInput.Length
+            );
         }
 
-        /// <inheritdoc/>
-        public string Decode(string input)
-        {
-            using (MemoryStream memoryStream = new MemoryStream(Convert.FromBase64String(s: input)))
-            {
-                byte[] iv = new byte[16];
-                memoryStream.Read(
-                    buffer: iv,
-                    offset: 0,
-                    count: iv.Length
-                );
+        return Convert.ToBase64String(memoryStream.ToArray());
+    }
 
-                using (AesManaged aesManaged = new AesManaged()
-                { 
-                    Key = key, 
-                    IV = iv
-                })
-                using (CryptoStream cryptoStream = new CryptoStream(
-                    stream: memoryStream, 
-                    transform: aesManaged.CreateDecryptor(), 
-                    mode: CryptoStreamMode.Read, 
-                    leaveOpen: true
-                ))
-                using (MemoryStream outputMemoryStream = new MemoryStream())
-                {
-                    cryptoStream.CopyTo(destination: outputMemoryStream);
-                    return Encoding.UTF8.GetString(outputMemoryStream.ToArray());
-                }
-            }
-        }
+    /// <inheritdoc />
+    public string Decode(string input)
+    {
+        using var memoryStream = new MemoryStream(Convert.FromBase64String(input));
+        var iv = new byte[16];
+        memoryStream.Read(
+            iv,
+            0,
+            iv.Length
+        );
+
+        using var aesManaged = new AesManaged();
+        aesManaged.Key = _key;
+        aesManaged.IV = iv;
+        using var cryptoStream = new CryptoStream(
+            stream: memoryStream,
+            transform: aesManaged.CreateDecryptor(),
+            mode: CryptoStreamMode.Read
+        );
+        using var outputMemoryStream = new MemoryStream();
+        cryptoStream.CopyTo(outputMemoryStream);
+        return Encoding.UTF8.GetString(outputMemoryStream.ToArray());
     }
 }

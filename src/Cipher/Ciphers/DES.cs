@@ -1,84 +1,67 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Security.Cryptography;
+﻿using System.Security.Cryptography;
 using System.Text;
-using System.Threading.Tasks;
-
 using Hopex.Cipher.Interfaces;
 
-namespace Hopex.Cipher.Ciphers
+namespace Hopex.Cipher.Ciphers;
+
+internal class DES : ICipher
 {
-    internal class DES : ICipher
+    private const CipherMode CipherMode = System.Security.Cryptography.CipherMode.ECB;
+
+    private const PaddingMode PaddingMode = System.Security.Cryptography.PaddingMode.PKCS7;
+    private readonly byte[] _key;
+
+    public DES(string key)
     {
-        private readonly string key;
+        if (string.IsNullOrEmpty(key))
+            throw new Exception("The encryption key cannot be empty.");
 
-        private readonly CipherMode cipherMode = CipherMode.ECB;
+        _key = Encoding.UTF8.GetBytes(key);
+    }
 
-        private readonly PaddingMode paddingMode = PaddingMode.PKCS7;
+    /// <inheritdoc />
+    public string Encode(string input)
+    {
+        var bytesOfInput = Encoding.UTF8.GetBytes(input);
+        using var mD5CryptoServiceProvider = new MD5CryptoServiceProvider();
+        var bytesOfHash = mD5CryptoServiceProvider.ComputeHash(_key);
+        using var tripleCryptoServiceProvider = new TripleDESCryptoServiceProvider();
+        tripleCryptoServiceProvider.Key = bytesOfHash;
+        tripleCryptoServiceProvider.Mode = CipherMode;
+        tripleCryptoServiceProvider.Padding = PaddingMode;
 
-        public DES(string key)
-        {
-            if (string.IsNullOrEmpty(key))
-                throw new Exception("The encryption key cannot be empty.");
+        var bytesOfTransformBlock = tripleCryptoServiceProvider
+            .CreateEncryptor()
+            .TransformFinalBlock(
+                bytesOfInput,
+                0,
+                bytesOfInput.Length
+            );
 
-            this.key = key;
-        }
+        return Convert.ToBase64String(
+            bytesOfTransformBlock,
+            0,
+            bytesOfTransformBlock.Length
+        );
+    }
 
-        /// <inheritdoc/>
-        public string Encode(string input)
-        {
-            byte[] bytesOfInput = Encoding.UTF8.GetBytes(s: input);
-            using (MD5CryptoServiceProvider mD5CryptoServiceProvider = new MD5CryptoServiceProvider())
-            {
-                byte[] bytesOfHash = mD5CryptoServiceProvider.ComputeHash(buffer: Encoding.UTF8.GetBytes(s: key));
-                using (TripleDESCryptoServiceProvider tripleCryptoServiceProvider = new TripleDESCryptoServiceProvider()
-                { 
-                    Key = bytesOfHash, 
-                    Mode = cipherMode, 
-                    Padding = paddingMode
-                })
-                {
-                    byte[] bytesOfTransformBlock = tripleCryptoServiceProvider
-                        .CreateEncryptor()
-                        .TransformFinalBlock(
-                            inputBuffer: bytesOfInput,
-                            inputOffset: 0,
-                            inputCount: bytesOfInput.Length
-                        );
+    /// <inheritdoc />
+    public string Decode(string input)
+    {
+        var bytesOfInput = Convert.FromBase64String(input);
+        using var mD5CryptoServiceProvider = new MD5CryptoServiceProvider();
+        var bytesOfHash = mD5CryptoServiceProvider.ComputeHash(_key);
+        using var tripDes = new TripleDESCryptoServiceProvider();
+        tripDes.Key = bytesOfHash;
+        tripDes.Mode = CipherMode;
+        tripDes.Padding = PaddingMode;
 
-                    return Convert.ToBase64String(
-                        inArray: bytesOfTransformBlock, 
-                        offset: 0, 
-                        length: bytesOfTransformBlock.Length
-                    );
-                }
-            }
-        }
-
-        /// <inheritdoc/>
-        public string Decode(string input)
-        {
-            byte[] bytesOfInput = Convert.FromBase64String(s: input);
-            using (MD5CryptoServiceProvider mD5CryptoServiceProvider = new MD5CryptoServiceProvider())
-            {
-                byte[] bytesOfHash = mD5CryptoServiceProvider.ComputeHash(buffer: Encoding.UTF8.GetBytes(s: key));
-                using (TripleDESCryptoServiceProvider tripDes = new TripleDESCryptoServiceProvider() 
-                { 
-                    Key = bytesOfHash, 
-                    Mode = cipherMode, 
-                    Padding = paddingMode
-                })
-                {
-                    ICryptoTransform cryptoTransform = tripDes.CreateDecryptor();
-                    byte[] bytesOfTransformBlock = cryptoTransform.TransformFinalBlock(
-                        inputBuffer: bytesOfInput,
-                        inputOffset: 0,
-                        inputCount: bytesOfInput.Length
-                    );
-                    return Encoding.UTF8.GetString(bytes: bytesOfTransformBlock);
-                }
-            }
-        }
+        var cryptoTransform = tripDes.CreateDecryptor();
+        var bytesOfTransformBlock = cryptoTransform.TransformFinalBlock(
+            bytesOfInput,
+            0,
+            bytesOfInput.Length
+        );
+        return Encoding.UTF8.GetString(bytesOfTransformBlock);
     }
 }
